@@ -146,7 +146,47 @@ def get_data_generators(
         (train_generator, val_generator, test_generator)
     """
     # ── YOUR CODE STARTS HERE ─────────────────────────────────────────────
-    raise NotImplementedError("TODO 1: implement get_data_generators()")
+    data_dir = Path(data_dir)
+
+    if augment_train:
+        train_datagen = ImageDataGenerator(
+            rescale=1.0 / 255,
+            horizontal_flip=True,
+            rotation_range=10,
+            zoom_range=0.1,
+            width_shift_range=0.1,
+            height_shift_range=0.1,
+        )
+    else:
+        train_datagen = ImageDataGenerator(rescale=1.0 / 255)
+
+    val_test_datagen = ImageDataGenerator(rescale=1.0 / 255)
+
+    train_gen = train_datagen.flow_from_directory(
+        data_dir / "train",
+        target_size=img_size,
+        batch_size=batch_size,
+        class_mode="binary",
+        seed=SEED,
+    )
+
+    val_gen = val_test_datagen.flow_from_directory(
+        data_dir / "val",
+        target_size=img_size,
+        batch_size=batch_size,
+        class_mode="binary",
+        seed=SEED,
+    )
+
+    test_gen = val_test_datagen.flow_from_directory(
+        data_dir / "test",
+        target_size=img_size,
+        batch_size=batch_size,
+        class_mode="binary",
+        seed=SEED,
+    )
+
+    return train_gen, val_gen, test_gen
     # ── YOUR CODE ENDS HERE ───────────────────────────────────────────────
 
 
