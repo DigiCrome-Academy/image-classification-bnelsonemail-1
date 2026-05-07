@@ -299,7 +299,18 @@ def compute_class_weights(train_generator) -> dict:
         dict: {class_index: weight}
     """
     # ── YOUR CODE STARTS HERE ─────────────────────────────────────────────
-    raise NotImplementedError("TODO 3: implement compute_class_weights()")
+    from sklearn.utils.class_weight import compute_class_weight
+
+    classes = train_generator.classes
+    class_indices = np.unique(classes)
+
+    weights = compute_class_weight(
+        class_weight="balanced",
+        classes=class_indices,
+        y=classes,
+    )
+
+    return dict(zip(class_indices, weights))
     # ── YOUR CODE ENDS HERE ───────────────────────────────────────────────
 
 
