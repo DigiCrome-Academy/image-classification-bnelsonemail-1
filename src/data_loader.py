@@ -21,11 +21,15 @@ Expected directory structure after download:
 import os
 import numpy as np
 from pathlib import Path
+import subprocess
+import zipfile
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
+dataset = "https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia"
+destination = '~/mnt/v/computerScience/digicrome/internship/projects/04_image_classification/data/raw/'
 DATA_DIR = Path("data/chest_xray")
 IMG_SIZE = (224, 224)          # resize target for all models
 BATCH_SIZE = 32
@@ -35,6 +39,82 @@ CLASS_NAMES = ["NORMAL", "PNEUMONIA"]
 
 
 # ── TODO 1 ───────────────────────────────────────────────────────────────────
+
+def download_kaggle_dataset(
+    dataset: str,
+    destination: str,
+    unzip: bool = True,
+) -> None:
+    """
+    Download a Kaggle dataset to a specified directory.
+
+    Parameters
+    ----------
+    dataset : str
+        Kaggle dataset identifier.
+        Example: "salader/dogs-vs-cats"
+
+    destination : str
+        Path where dataset should be stored.
+
+    unzip : bool, default=True
+        Whether to automatically unzip downloaded files.
+    """
+
+    destination_path = Path(destination).expanduser()
+    destination_path.mkdir(parents=True, exist_ok=True)
+
+    if any(destination_path.iterdir()):
+        print(f"Dataset already downloaded at {destination_path}. Skipping download.")
+        return
+
+    # Accept full Kaggle URLs; extract "owner/dataset-name" slug
+    if dataset.startswith("http"):
+        # e.g. https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia
+        parts = dataset.rstrip("/").split("/")
+        dataset = f"{parts[-2]}/{parts[-1]}"
+
+    print(f"Downloading dataset: {dataset}")
+    print(f"Destination: {destination_path}")
+
+    command = [
+        "kaggle",
+        "datasets",
+        "download",
+        "-d",
+        dataset,
+        "-p",
+        str(destination_path),
+    ]
+
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Kaggle download failed:\n{result.stderr}"
+        )
+
+    print("Download complete.")
+
+    if unzip:
+        zip_files = list(destination_path.glob("*.zip"))
+
+        if not zip_files:
+            print("No zip files found.")
+            return
+
+        for zip_file in zip_files:
+            print(f"Extracting: {zip_file.name}")
+
+            with zipfile.ZipFile(zip_file, "r") as zf:
+                zf.extractall(destination_path)
+
+        print("Extraction complete.")
+
 def get_data_generators(
     data_dir: str | Path = DATA_DIR,
     img_size: tuple = IMG_SIZE,
