@@ -218,7 +218,63 @@ def get_tf_datasets(
         (train_dataset, val_dataset, test_dataset)
     """
     # ── YOUR CODE STARTS HERE ─────────────────────────────────────────────
-    raise NotImplementedError("TODO 2: implement get_tf_datasets()")
+    data_dir = Path(data_dir)
+
+    train_ds = tf.keras.utils.image_dataset_from_directory(
+        data_dir / "train",
+        image_size=img_size,
+        batch_size=batch_size,
+        label_mode="binary",
+        seed=SEED,
+    )
+
+    val_ds = tf.keras.utils.image_dataset_from_directory(
+        data_dir / "val",
+        image_size=img_size,
+        batch_size=batch_size,
+        label_mode="binary",
+        seed=SEED,
+    )
+
+    test_ds = tf.keras.utils.image_dataset_from_directory(
+        data_dir / "test",
+        image_size=img_size,
+        batch_size=batch_size,
+        label_mode="binary",
+        seed=SEED,
+    )
+
+    normalization = tf.keras.layers.Rescaling(1.0 / 255)
+
+    if augment_train:
+        augmentation = tf.keras.Sequential([
+            tf.keras.layers.RandomFlip("horizontal"),
+            tf.keras.layers.RandomRotation(10 / 360),
+        ])
+        train_ds = train_ds.map(
+            lambda x, y: (augmentation(normalization(x), training=True), y),
+            num_parallel_calls=tf.data.AUTOTUNE,
+        )
+    else:
+        train_ds = train_ds.map(
+            lambda x, y: (normalization(x), y),
+            num_parallel_calls=tf.data.AUTOTUNE,
+        )
+
+    val_ds = val_ds.map(
+        lambda x, y: (normalization(x), y),
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
+    test_ds = test_ds.map(
+        lambda x, y: (normalization(x), y),
+        num_parallel_calls=tf.data.AUTOTUNE,
+    )
+
+    train_ds = train_ds.cache().shuffle(buffer_size=1000, seed=SEED).prefetch(tf.data.AUTOTUNE)
+    val_ds = val_ds.cache().prefetch(tf.data.AUTOTUNE)
+    test_ds = test_ds.cache().prefetch(tf.data.AUTOTUNE)
+
+    return train_ds, val_ds, test_ds
     # ── YOUR CODE ENDS HERE ───────────────────────────────────────────────
 
 
