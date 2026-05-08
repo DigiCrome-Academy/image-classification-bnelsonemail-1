@@ -49,7 +49,27 @@ def build_baseline_mlp(
         Compiled keras.Model
     """
     # ── YOUR CODE STARTS HERE ─────────────────────────────────────────────
-    raise NotImplementedError("TODO 4: implement build_baseline_mlp()")
+    optimizer_instance = keras.optimizers.get({
+        "class_name": optimizer,
+        "config": {"learning_rate": learning_rate},
+    })
+
+    model = keras.Sequential([
+        layers.Input(shape=input_shape),
+        layers.Flatten(),
+        layers.Dense(512, activation=activation),
+        layers.Dense(256, activation=activation),
+        layers.Dense(128, activation=activation),
+        layers.Dense(num_classes, activation="sigmoid"),
+    ])
+
+    model.compile(
+        optimizer=optimizer_instance,
+        loss="binary_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    return model
     # ── YOUR CODE ENDS HERE ───────────────────────────────────────────────
 
 
